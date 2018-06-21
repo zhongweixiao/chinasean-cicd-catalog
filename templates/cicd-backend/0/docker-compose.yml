@@ -16,6 +16,10 @@ services:
     restart: always
     ports:
       - "13003:8080"
+  {{- if ne .Values.LOCAL_MOUNT ""}}
+    volumes:
+      - "${LOCAL_MOUNT}:/var/jenkins_home"
+  {{- end }}
   {{- if ne .Values.HOST_LABEL "" }}
     labels:
       io.rancher.scheduler.affinity:host_label: ${HOST_LABEL}
@@ -49,10 +53,6 @@ services:
       - PORT=60080
       - DB_HOST=database
       - DB_PORT=3306
-  {{- if ne .Values.LOCAL_MOUNT ""}}
-    volumes:
-      - "${LOCAL_MOUNT}:/var/jenkins_home"
-  {{- end }}
     labels:
       io.rancher.container.create_agent: 'true'
       io.rancher.container.agent.role: environment
