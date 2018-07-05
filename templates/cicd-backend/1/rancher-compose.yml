@@ -1,0 +1,75 @@
+.catalog:
+  name: "Asean CI/CD Backend"
+  version: "v1.1-swarm-local-mount"
+  description: "Deploy Asean CI/CD Backend the easy way"
+  questions:
+  - variable: "REGISTRY_PREFIX"
+    label: "registry prefix"
+    default: "10.18.1.230:80/allblue/"
+    description: "Image registry prefix, end with /, can be empty"
+    required: false
+    type: "string"
+  - variable: "HOST_LABEL"
+    label: "host label"
+    default: "host=cicd"
+    description: "Host label"
+    required: false
+    type: "string"
+  - variable: "EXECUTORS"
+    label: "# of executors"
+    default: "2"
+    description: "How many executors on a jenkins slave"
+    required: true
+    type: "int"
+  - variable: "SLAVES"
+    label: "# of slaves"
+    default: "1"
+    description: "How many jenkins slaves to run ci tasks. At least 1."
+    required: true
+    type: "int"
+  - variable: "LOCAL_MOUNT"
+    label: "local mount"
+    default: "/jenkins_home"
+    description: "mount host dir to /var/jenkins_home"
+    required: false
+    type: "string"
+  - variable: "DATABASE_MOUNT"
+    label: "database mount"
+    default: "/mysql_home"
+    description: "mount host dir to /var/lib/mysql"
+    required: false
+    type: "string"
+  - variable: "PORT_CICD"
+    label: "cicd backend port"
+    default: "13004"
+    description: "CICD backend port"
+    required: true
+    type: "int"
+  - variable: "PORT_DATABASE"
+    label: "database port"
+    default: "13002"
+    description: "Database port"
+    required: true
+    type: "int"
+  - variable: "PORT_JENKINS"
+    label: "jenkins port"
+    default: "13003"
+    description: "jenkins port"
+    required: true
+    type: "int"
+
+database:
+  scale: 1
+  start_on_create: true
+jenkins-master:
+  scale: 1
+  start_on_create: true
+jenkins-slave-1:
+  scale: 1
+  start_on_create: true
+cicd-backend:
+  scale: 1
+  start_on_create: true
+jenkins-slave-swarm:
+  scale: ${SLAVES}
+  start_on_create: true

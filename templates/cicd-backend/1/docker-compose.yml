@@ -1,0 +1,76 @@
+version: '2'
+services:
+  database:
+    image: "${REGISTRY_PREFIX}mymysql:latest"
+    restart: always
+    ports:
+      - "${PORT_DATABASE}:3306"
+  {{- if ne .Values.DATABASE_MOUNT ""}}
+    volumes:
+      - "${DATABASE_MOUNT}:/var/lib/mysql"
+  {{- end }}
+  {{- if ne .Values.HOST_LABEL "" }}
+    labels:
+      io.rancher.scheduler.affinity:host_label: ${HOST_LABEL}
+  {{- end }}
+  jenkins-master:
+    image: "${REGISTRY_PREFIX}myjenkins:latest"
+    restart: always
+    ports:
+      - "${PORT_JENKINS}:8080"
+  {{- if ne .Values.LOCAL_MOUNT ""}}
+    volumes:
+      - "${LOCAL_MOUNT}:/var/jenkins_home"
+  {{- end }}
+  {{- if ne .Values.HOST_LABEL "" }}
+    labels:
+      io.rancher.scheduler.affinity:host_label: ${HOST_LABEL}
+  {{- end }}
+  jenkins-slave-1:
+    image: "${REGISTRY_PREFIX}myjenkins-slave:latest"
+    restart: always
+    links:
+      - jenkins-master
+    environment:
+      - JENKINS_MASTER_URL=http://jenkins-master:8080
+      - SLAVE_NODE_NAME=Node-1
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+  {{- if ne .Values.HOST_LABEL "" }}
+    labels:
+      io.rancher.scheduler.affinity:host_label: ${HOST_LABEL}
+  {{- end }}
+  cicd-backend:
+    image: "${REGISTRY_PREFIX}mycicd:latest"
+    restart: always
+    ports:
+      - "${PORT_CICD}:60080"
+    links:
+      - jenkins-master
+      - database
+    environment:
+      - JENKINS_ADDRESS=http://jenkins-master:8080
+      - JENKINS_USER=admin
+      - SERVER_URL=http://cicd-backend
+      - PORT=60080
+      - DB_HOST=database
+      - DB_PORT=3306
+    labels:
+      io.rancher.container.create_agent: 'true'
+      io.rancher.container.agent.role: environment
+  {{- if ne .Values.HOST_LABEL "" }}
+      io.rancher.scheduler.affinity:host_label: ${HOST_LABEL}
+  {{- end }}
+  jenkins-slave-swarm:
+    image: "${REGISTRY_PREFIX}myjenkins-slave-swarm:latest"
+    restart: always
+    links:
+      - jenkins-master
+    environment:
+      - JENKINS_MASTER_URL=http://jenkins-master:8080
+      - JENKINS_USERNAME=admin
+      - JENKINS_PASSWORD=admin
+      - SLAVE_EXECUTORS=${EXECUTORS}
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      
